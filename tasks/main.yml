@@ -61,6 +61,9 @@
   notify: restart bitbucket
   tags: hswong3i.bitbucket
 
+- name: Testing OS
+  debug: msg="{{ ansible_os_family }}"
+
 - name: copy init.d
   template:
     src: "etc/init.d/bitbucket.j2"
@@ -68,8 +71,7 @@
     owner: "root"
     group: "root"
     mode: "0755"
-  when: 
-    (ansible_os_family == 'Ubuntu')
+  when: ansible_os_family == 'Ubuntu'
   tags: hswong3i.bitbucket
 
 - name: copy init systemd
