@@ -16,7 +16,6 @@ galaxy_info:
         - 7
         - 6
   galaxy_tags:
-    - system
     - BitBucket
     - git
     - Atlassian
