@@ -61,8 +61,9 @@
   notify: restart bitbucket
   tags: hswong3i.bitbucket
 
-- name: Testing OS
-  debug: msg="{{ ansible_os_family }}"
+- name: Check if systemd exists
+  stat: path=/etc/systemd/
+  register: check_systemd
 
 - name: copy init.d
   template:
@@ -71,7 +72,7 @@
     owner: "root"
     group: "root"
     mode: "0755"
-  when: ansible_os_family == 'Ubuntu'
+  when: check_systemd.stat.exists == false
   tags: hswong3i.bitbucket
 
 - name: copy init systemd
@@ -81,20 +82,12 @@
     owner: "root"
     group: "root"
     mode: "0755"
-  when: 
-    (ansible_os_family == 'RedHat' and ansible_distribution_version >= '7') or
-    (ansible_os_family == 'CentOS' and ansible_distribution_version >= '7') or
-    (ansible_os_family == 'Debian' and ansible_distribution_version >= '7') or
-    (ansible_os_family == 'Fedora' and ansible_distribution_version >= '15') 
+  when: check_systemd.stat.exists == true
   tags: hswong3i.bitbucket
 
 - name: reload systemd
   systemd: name=bitbucket daemon_reload=yes
-  when: 
-    (ansible_os_family == 'RedHat' and ansible_distribution_version >= '7') or 
-    (ansible_os_family == 'CentOS' and ansible_distribution_version >= '7') or
-    (ansible_os_family == 'Debian' and ansible_distribution_version >= '7') or
-    (ansible_os_family == 'Fedora' and ansible_distribution_version >= '15') 
+  when: check_systemd.stat.exists == true
 
 - name: enable service
   service:
