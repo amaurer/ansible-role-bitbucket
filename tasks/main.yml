@@ -46,10 +46,9 @@
     chown -Rf {{ bitbucket_user }}:{{ bitbucket_user }} {{ bitbucket_catalina }}
   args:
     creates: "{{ bitbucket_catalina }}/bin/start-bitbucket.sh"
-  notify: restart bitbucket
   tags: hswong3i.bitbucket
 
-- name: copy templates
+- name: copy configs
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -57,11 +56,40 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   with_items:
-    - { src: "etc/init.d/bitbucket.j2", dest: "/etc/init.d/bitbucket", owner: "root", group: "root", mode: "0755" }
     - { src: "usr/share/bitbucket/bin/setenv.sh.j2", dest: "{{ bitbucket_catalina }}/bin/setenv.sh", owner: "{{ bitbucket_user }}", group: "{{ bitbucket_user }}", mode: "0644" }
     - { src: "usr/share/bitbucket/conf/server.xml.j2", dest: "{{ bitbucket_catalina }}/conf/server.xml", owner: "{{ bitbucket_user }}", group: "{{ bitbucket_user }}", mode: "0644" }
   notify: restart bitbucket
   tags: hswong3i.bitbucket
+
+- name: copy init.d
+  template:
+    src: "etc/init.d/bitbucket.j2"
+    dest: "/etc/init.d/bitbucket"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  when: 
+    (ansible_os_family == 'Ubuntu') or 
+    (ansible_os_family == 'Fedora')
+  tags: hswong3i.bitbucket
+
+- name: copy init systemd
+  template:
+    src: "etc/systemd/system/bitbucket.j2"
+    dest: "/etc/systemd/system/bitbucket.service"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  when: 
+    (ansible_os_family == 'RedHat' and ansible_distribution_version >= '7') or 
+    (ansible_os_family == 'CentOS' and ansible_distribution_version >= '7')
+  tags: hswong3i.bitbucket
+
+- name: reload systemd
+  systemd: name=bitbucket daemon_reload=yes
+  when: 
+    (ansible_os_family == 'RedHat' and ansible_distribution_version >= '7') or 
+    (ansible_os_family == 'CentOS' and ansible_distribution_version >= '7')
 
 - name: enable service
   service:
